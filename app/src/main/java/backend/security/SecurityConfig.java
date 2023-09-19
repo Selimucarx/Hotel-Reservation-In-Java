@@ -1,43 +1,53 @@
 package backend.security;
 
+import backend.services.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private final CustomUserDetailsService customUserDetailsService;
 
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+        this.customUserDetailsService = customUserDetailsService;
+    }
+
+
+    @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() // CSRF korumasını devre dışı bırakın (geçici olarak)
-                .authorizeRequests()
-                .antMatchers("/api/users/{id}").permitAll() // Giriş API'sine herkese izin verin
-                .antMatchers("/api/users/reset-password").permitAll()
-                .antMatchers("/api/users/login").permitAll() // Giriş API'sine herkese izin verin
-                .antMatchers("/api/users/register").permitAll() // Giriş API'sine herkese izin verin
-                .antMatchers("/api/admin/login").hasRole("admin") // Sadece adminin girebilcegi api
-                .antMatchers("/api/**").authenticated() // Diğer API'lar için kimlik doğrulama gerekiyor
-                .anyRequest().permitAll() // Diğer istekler için yetkilendirme yok
+                .httpBasic()
                 .and()
                 .formLogin()
-                .permitAll()
                 .and()
-                .logout()
-                .permitAll();
+                .authorizeRequests()
+                .antMatchers("/index").permitAll()
+                .antMatchers("/api/users/register").permitAll()
+                .antMatchers("/api/users/login").permitAll()
+                .antMatchers("/api/users/reset-password").hasRole("USER") // "USER" rolüne sahip kullanıcılara erişim izni verilir
+                .antMatchers("/api/admin-page").hasRole("ADMIN")
+                .antMatchers("/api/admin/login").hasRole("ADMIN") // "ADMIN" rolüne sahip kullanıcılara erişim izni verilir
+                .anyRequest().authenticated() // Diğer tüm istekler için kimlik doğrulama gereklidir
+                .and()
+                .csrf().disable();
     }
 
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception{
-        auth.inMemoryAuthentication()
-                .withUser("admin").password("{noop}1234").roles("admin")
-                .and()
-                .withUser("selim").password("{noop}1234").roles("user");
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(customUserDetailsService)
+                .passwordEncoder(passwordEncoder());
     }
 
-
-
-
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
