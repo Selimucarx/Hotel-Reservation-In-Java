@@ -1,6 +1,6 @@
 package backend.security;
 
-import backend.services.CustomUserDetailsService;
+import backend.service.user.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,16 +29,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .formLogin()
                 .and()
                 .authorizeRequests()
-                .antMatchers("/index").permitAll()
+                .antMatchers("/").permitAll()
+                .antMatchers("/api/index").permitAll()
+                .antMatchers("/api/hotel/").permitAll()
+                .antMatchers("/api/hotel/{id}").permitAll()
+                .antMatchers("/api/hotel/rooms").permitAll()
+                .antMatchers("/api/hotel/rooms/{id}").permitAll()
                 .antMatchers("/api/users/register").permitAll()
                 .antMatchers("/api/users/login").permitAll()
-                .antMatchers("/api/users/reset-password").hasRole("USER") // "USER" rolüne sahip kullanıcılara erişim izni verilir
+                .antMatchers("/api/reservations/check-availability").permitAll()
+                .antMatchers("/api/reservations").hasRole("USER")
+                .antMatchers("/api/reservations/{id}").hasRole("USER")
+                .antMatchers("/api/users/reset-password").hasRole("USER")
                 .antMatchers("/api/admin-page").hasRole("ADMIN")
-                .antMatchers("/api/admin/login").hasRole("ADMIN") // "ADMIN" rolüne sahip kullanıcılara erişim izni verilir
-                .anyRequest().authenticated() // Diğer tüm istekler için kimlik doğrulama gereklidir
+                .antMatchers("/api/admin/login").hasRole("ADMIN")
+                .anyRequest().authenticated()
                 .and()
                 .csrf().disable();
     }
+
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {

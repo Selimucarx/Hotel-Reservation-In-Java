@@ -17,6 +17,7 @@ dependencies {
 
     implementation ("org.hibernate:hibernate-core:5.5.6.Final")
 
+    implementation ("javax.validation:validation-api:2.0.1.Final") // Sürüm numarası projenize bağlı olarak değişebilir
 
 
 
